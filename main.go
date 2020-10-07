@@ -3,8 +3,9 @@ package main
 import (
 	// "os"
 	// "bufio"
-	// "fmt"
+	"fmt"
 	"fastmath/gameplay"
+	"fastmath/scoreboard"
 )
 	
 func check(e error) {
@@ -25,5 +26,11 @@ func main() {
 	// check(err)
 	// fmt.Println("Score Written ", n)
 	// w.Flush()
-	gameplay.Play("Jack", "L1")
+	scoreboard.LeaderBoard()
+	var username string
+	fmt.Println("Enter Your Username")
+	fmt.Scanln(&username)
+	fmt.Println("Hello, ", username, " Let's Play!")
+	fmt.Println()
+	gameplay.Play(username, "L1")
 }

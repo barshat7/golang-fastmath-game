@@ -9,10 +9,14 @@ import (
 	"strconv"
 	"strings"
 	"fastmath/scorer"
+	"math/rand"
+	"time"
+	"fastmath/scoreboard"
 )
 
 
 var questions [] question
+const totalQuestions = 10
 
 // Gameplay holds the current session of the user
 type Gameplay struct {
@@ -20,7 +24,7 @@ type Gameplay struct {
 	user string
 	level string
 	deliveredQuestionCount int
-	deliveredQuestions [] uint
+	deliveredQuestions [] int
 	currentScore float64
 }
 
@@ -83,15 +87,50 @@ func loadAllQuestionsInMemory(level string) {
 	questions = loadQuestions()
 }
 
+func generateRandomIDInRange(totalQuestions int) func() int {
+	theRange := totalQuestions
+	rand.Seed(time.Now().UnixNano())
+	return func () int {
+		return rand.Intn(theRange)
+	}
+}
+
 // Play The Game
 func Play(user string, level string) {
 	gamePlay := Gameplay{user: user, level: level, deliveredQuestionCount: 0, currentScore: 0.0}
 	loadAllQuestionsInMemory(level)
-	for _, q := range questions {
+	randomness := generateRandomIDInRange(len(questions))
+	for {
+		quid := randomness()
+		if (contains(gamePlay.deliveredQuestions, quid)) {
+			continue
+		}
+		q := questions[quid]
+		start := getCurrentTimeInMillis()
 		fmt.Println(q.getQuestion())
 		var answer string
 		fmt.Scanln(&answer)
-		gamePlay.currentScore = scorer.Score(q.verifyCorrect(answer), gamePlay.currentScore)
+		end := getCurrentTimeInMillis()
+		gamePlay.currentScore = scorer.Score(q.verifyCorrect(answer), gamePlay.currentScore, end - start)
+		gamePlay.deliveredQuestions = append(gamePlay.deliveredQuestions, quid)
+		gamePlay.deliveredQuestionCount ++
+		if (gamePlay.deliveredQuestionCount == totalQuestions) {
+			break
+		}
 	}
 	gamePlay.displayScore()
+	scoreboard.PutScoreInScoreBoard(gamePlay.user, gamePlay.currentScore)
+}
+
+func getCurrentTimeInMillis() int64 {
+    return time.Now().UnixNano() / int64(time.Millisecond)
+}
+
+func contains(quids [] int, quid int) bool {
+	for _, q := range quids {
+		if (q == quid) {
+			return true
+		}
+	}
+	return false
 }
